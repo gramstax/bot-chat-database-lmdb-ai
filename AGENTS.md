@@ -144,7 +144,13 @@
     OpenAI-compatible providers, e.g. Pollinations
     `https://text.pollinations.ai/openai` with model `openai`).
     `OpenAIClient` only sends the `Authorization` header when a key is
-    set.
+    set. **Rate-limit retry (added 2026-11-19 after live 402 errors
+    on free-text questions):** `OpenAIClient.chat` retries 402/429 up
+    to 3 times, waiting the provider's "Retry after Ns" (default 45 s,
+    cap 60 s) — a question needs several model calls (tool rounds),
+    and without the retry every burst fails on the free tier. Covered
+    by unit tests in `test/openai.test.ts` (with "Retry after 0s" so
+    the suite stays fast).
 24. **ALWAYS validate the README Mermaid flowchart before commit/push
     (Damar, 2026-11-19 ~16:13 WIB).** The diagram must render with
     0 errors — never commit a broken / non-rendering diagram. Extract
