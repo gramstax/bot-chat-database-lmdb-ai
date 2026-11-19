@@ -151,11 +151,17 @@
     the ```mermaid block from README.md and render it (one-off
     `mermaid` + `jsdom` validator in `/tmp/mermaid-check/validate.mjs`,
     or `mermaid-cli` `mmdc` when available) until parse is clean AND a
-    real SVG is produced. Label rules learned 2026-11-19: quote any
-    node label containing `@` or `"` (e.g.
-    `POOL["TranscribePool<br/>@gramstax/worker-thread, ..."]`,
-    `PAGES["... lang='id'"]`) — unquoted `@` / `"` is a parse error.
-    Render output stays in `/tmp`, never committed.
+    real SVG is produced. **CORRECTION 2026-11-19 ~16:30 WIB (verified
+    on live GitHub): local mermaid v11 parse can PASS while GitHub's
+    renderer FAILS. The DB Chat diagram failed on GitHub with
+    "Parse error on line 6 ... Expecting 'SQE' ... got 'STR'" because
+    of `PAGES["Static pages<br/>template EN + lang='id'"]` — GitHub's
+    parser chokes on `=` and nested quotes inside node text. RULE:
+    NEVER put `=` or nested quotes inside a Mermaid node label; write
+    plain words instead (e.g. `template EN and ID`). The final check
+    MUST be the rendered diagram on the live GitHub README page, not
+    just a local parse.** Render output stays in `/tmp`, never
+    committed.
 
 ## DB Chat — project notes (2026-11-19)
 

@@ -32,7 +32,7 @@ flowchart TD
     HOOK -->|denied| DENY[Reply: only allowed users]
     HOOK -->|allowed| ROUTE{Message type?}
     ROUTE -->|/tables, /schema| LIST[TablesPage / SchemaPage<br/>read LMDB registry]
-    ROUTE -->|/start, /help, /language, /forget| PAGES["Static pages<br/>template EN + lang='id'"]
+    ROUTE -->|/start, /help, /language, /forget| PAGES["Static pages<br/>template EN and ID"]
     ROUTE -->|free text| CHAT[ChatPage.handleFreeText<br/>typing indicator]
     CHAT --> MEM[MemoryRepository<br/>last 10 turns, LMDB]
     MEM --> AGENT[DbChatService.chat<br/>GPT-4o-mini + system prompt<br/>English or Indonesian]
