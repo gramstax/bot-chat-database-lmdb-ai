@@ -1,6 +1,10 @@
+import {OPENAI_DEFAULT_BASE_URL} from "./openai"
+
 /** Runtime config for DB Chat — all secrets come from env, never hardcoded. */
 export interface AppConfigData {
   openaiApiKey: string
+  openaiBaseUrl: string
+  openaiModel: string
   mockAi: boolean
   allowedIds: Set<number>
   dbPath: string
@@ -12,6 +16,8 @@ export class AppConfig {
   static load(env: NodeJS.ProcessEnv = process.env): AppConfigData {
     return {
       openaiApiKey: env.OPENAI_API_KEY ?? ``,
+      openaiBaseUrl: AppConfig.normalizeBaseUrl(env.OPENAI_BASE_URL ?? ``),
+      openaiModel: (env.OPENAI_MODEL ?? ``).trim() || `gpt-4o-mini`,
       mockAi: env.DBCHAT_MOCK_AI === `1` || env.DBCHAT_MOCK_AI === `true`,
       allowedIds: AppConfig.parseIds(env.DBCHAT_ALLOWED_IDS ?? ``),
       dbPath: env.DB_PATH ?? `./data`,
@@ -44,13 +50,28 @@ export class AppConfig {
     return out
   }
 
+  /** Trim + strip trailing slashes; empty falls back to the OpenAI default. */
+  static normalizeBaseUrl(raw: string): string {
+    const trimmed = raw.trim().replace(/\/+$/, ``)
+    return trimmed === `` ? OPENAI_DEFAULT_BASE_URL : trimmed
+  }
+
+  /** True when the configured base URL points at a non-default provider. */
+  static isCustomBaseUrl(env: NodeJS.ProcessEnv = process.env): boolean {
+    return AppConfig.normalizeBaseUrl(env.OPENAI_BASE_URL ?? ``) !== OPENAI_DEFAULT_BASE_URL
+  }
+
   /**
-   * Mock is active when DBCHAT_MOCK_AI=1 OR when no OPENAI_API_KEY is set.
-   * Reads env DIRECTLY (not the load-time cache): e2e setup sets env after
-   * the module was imported, so a cache would go stale.
+   * Mock is active when DBCHAT_MOCK_AI=1, OR when there is no
+   * OPENAI_API_KEY AND the base URL is the default OpenAI one. A custom
+   * base URL (e.g. a free OpenAI-compatible provider) runs live without
+   * a key — no mock. Reads env DIRECTLY (not the load-time cache): e2e
+   * setup sets env after the module was imported, so a cache would go
+   * stale.
    */
   static isMock(env: NodeJS.ProcessEnv = process.env): boolean {
     if (env.DBCHAT_MOCK_AI === `1` || env.DBCHAT_MOCK_AI === `true`) return true
-    return (env.OPENAI_API_KEY ?? ``).trim() === ``
+    if ((env.OPENAI_API_KEY ?? ``).trim() !== ``) return false
+    return !AppConfig.isCustomBaseUrl(env)
   }
 }

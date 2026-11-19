@@ -13,7 +13,11 @@
    reference inside `references/` (its README + the JSON file name).
 3. **README.md MUST contain a Mermaid flowchart** of this project's
    own code flow.
-4. **Repo description MUST start with 1 emoji**, English.
+4. **Repo description MUST start with 1 emoji**, English. The
+   description says "ask in English or Indonesian" (Damar, 2026-11-19
+   ~16:21 WIB) — NEVER "plain English" only: the bot is multilingual,
+   and the README intro + start/help templates must say the same
+   ("in English or Indonesian"), not "plain English".
 5. **Bilingual, English by default**: every user-facing message is
    English by default AND Indonesian. Language is stored per user in
    LMDB (`UserSchema.botLang`), changed with `/language`; follow
@@ -128,6 +132,30 @@
     (`inlineKeyboardT(...)` / `inlineKeyboard(...)`). E2E must prove
     the keyboard shows the right labels in both languages
     (`e2e/start/index.test.ts`, `e2e/language.test.ts`).
+23. **AI model + base URL are configurable via `.env` (Damar,
+    2026-11-19 ~16:10 WIB).** `OPENAI_BASE_URL` (default
+    `https://api.openai.com/v1`) and `OPENAI_MODEL` (default
+    `gpt-4o-mini`) are read in `AppConfig.load()` and passed through
+    `DbChatService.chat()` into `OpenAIClient.chat()` — never hardcode
+    the model or the chat URL in `src/lib/dbchat.ts` or
+    `src/lib/openai.ts`. Mock rule: `DBCHAT_MOCK_AI=1` forces mock;
+    otherwise a key means live; no key + default base URL means mock;
+    no key + a custom base URL means LIVE without a key (free
+    OpenAI-compatible providers, e.g. Pollinations
+    `https://text.pollinations.ai/openai` with model `openai`).
+    `OpenAIClient` only sends the `Authorization` header when a key is
+    set.
+24. **ALWAYS validate the README Mermaid flowchart before commit/push
+    (Damar, 2026-11-19 ~16:13 WIB).** The diagram must render with
+    0 errors — never commit a broken / non-rendering diagram. Extract
+    the ```mermaid block from README.md and render it (one-off
+    `mermaid` + `jsdom` validator in `/tmp/mermaid-check/validate.mjs`,
+    or `mermaid-cli` `mmdc` when available) until parse is clean AND a
+    real SVG is produced. Label rules learned 2026-11-19: quote any
+    node label containing `@` or `"` (e.g.
+    `POOL["TranscribePool<br/>@gramstax/worker-thread, ..."]`,
+    `PAGES["... lang='id'"]`) — unquoted `@` / `"` is a parse error.
+    Render output stays in `/tmp`, never committed.
 
 ## DB Chat — project notes (2026-11-19)
 

@@ -306,12 +306,12 @@ export class DbChatService {
   static async chat(db: Db, userId: number, text: string, lang: Lang = `en`, now = new Date()): Promise<IDbChatReply> {
     const memory = db.memory.list(userId)
     // Read env fresh (not load-time cache) — see AppConfig.isMock.
-    const apiKey = AppConfig.load().openaiApiKey
+    const cfg = AppConfig.load()
     const mock = AppConfig.isMock()
 
     const built = mock
       ? await DbChatService.mockReply(db, text, memory)
-      : await DbChatService.liveReply(db, text, memory, apiKey, now, lang)
+      : await DbChatService.liveReply(db, text, memory, cfg.openaiApiKey, cfg.openaiModel, cfg.openaiBaseUrl, now, lang)
     const reply: IDbChatReply = {...built, via: mock ? `mock` : `openai`}
 
     await db.memory.add(userId, {role: `user`, text, at: Date.now()})
@@ -327,6 +327,8 @@ export class DbChatService {
     text: string,
     memory: ITurn[],
     apiKey: string,
+    model: string,
+    baseUrl: string,
     now: Date,
     lang: Lang,
   ): Promise<Omit<IDbChatReply, `via`>> {
@@ -338,7 +340,7 @@ export class DbChatService {
     ]
     const toolsUsed: string[] = []
     for (let round = 0; round < 3; round++) {
-      const {message} = await OpenAIClient.chat(apiKey, `gpt-4o-mini`, messages, TOOLS)
+      const {message} = await OpenAIClient.chat(apiKey, model, messages, TOOLS, baseUrl)
       const calls = message.tool_calls ?? []
       if (calls.length === 0) {
         const reply = (message.content ?? ``).trim()

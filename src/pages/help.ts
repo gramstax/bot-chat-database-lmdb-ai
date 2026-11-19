@@ -29,8 +29,9 @@ export class HelpPage extends PageBase {
         <b>🆘 Help — DB Chat</b>
 
         <b>Chat directly</b>
-        Just send a question in plain English — no SQL needed. I turn it
-        into a read-only query, run it against the database, and answer.
+        Just send a question in English or Indonesian — no SQL needed.
+        I turn it into a read-only query, run it against the database,
+        and answer.
         I remember the last 10 messages of our chat, so follow-up
         questions keep their context even if the bot restarts.
 

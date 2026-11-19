@@ -36,9 +36,9 @@ export class StartPage extends PageBase {
       <g-message>
         <b>👋 Hello {{userName}}, I'm DB Chat!</b>
 
-        Ask me anything about your database — in plain English, no SQL
-        needed. I ask GPT-4o-mini to turn your question into a query, run
-        it read-only against the database, and answer you.
+        Ask me anything about your database — in English or Indonesian,
+        no SQL needed. I ask GPT-4o-mini to turn your question into a
+        query, run it read-only against the database, and answer you.
 
         <b>Try asking:</b>
         • Which tables are available?

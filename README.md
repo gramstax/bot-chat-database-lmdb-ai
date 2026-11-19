@@ -2,7 +2,7 @@
 
 A production-ready Telegram bot built with [Gramstax](https://github.com/gramstax/gramstax): declarative pages, template-driven messages, and end-to-end tested flows.
 
-DB Chat lets you talk to your database in plain English. Send any question — no SQL needed. GPT-4o-mini turns it into a read-only query, the bot runs it against the database stored in LMDB, and answers you in the chat. It remembers the last 10 turns of your conversation.
+DB Chat lets you talk to your database in English or Indonesian. Send any question — no SQL needed. GPT-4o-mini turns it into a read-only query, the bot runs it against the database stored in LMDB, and answers you in the chat. It remembers the last 10 turns of your conversation.
 
 The generated project is Bun-only: `gramstax start`, the test suite, and the build all run on Bun.
 
@@ -32,7 +32,7 @@ flowchart TD
     HOOK -->|denied| DENY[Reply: only allowed users]
     HOOK -->|allowed| ROUTE{Message type?}
     ROUTE -->|/tables, /schema| LIST[TablesPage / SchemaPage<br/>read LMDB registry]
-    ROUTE -->|/start, /help, /language, /forget| PAGES[Static pages<br/>template EN + lang="id"]
+    ROUTE -->|/start, /help, /language, /forget| PAGES["Static pages<br/>template EN + lang='id'"]
     ROUTE -->|free text| CHAT[ChatPage.handleFreeText<br/>typing indicator]
     CHAT --> MEM[MemoryRepository<br/>last 10 turns, LMDB]
     MEM --> AGENT[DbChatService.chat<br/>GPT-4o-mini + system prompt<br/>English or Indonesian]
@@ -166,10 +166,22 @@ All settings live in `.env` and are wired through `gramstax.config.ts` (`token` 
 | `BOT_TOKEN`     | Yes      | Bot token from [@BotFather](https://t.me/BotFather)             |
 | `BOT_DEPLOY`    | Yes      | `polling` (dev) · `webhook` · `serverless` (details in `optionsDeploy`) |
 | `CACHE_SESSION_STORE` | No       | `memory` (single instance) or `redis:<url>` (multi-instance)    |
-| `OPENAI_API_KEY` | No      | OpenAI key for GPT-4o-mini answers. Empty = mock mode (deterministic answers from the real LMDB dataset) |
+| `OPENAI_API_KEY` | No      | API key for live AI answers. Empty + default base URL = mock mode (deterministic answers from the real LMDB dataset); empty + custom base URL = live mode without a key (free providers) |
+| `OPENAI_BASE_URL` | No     | OpenAI-compatible API base URL (default `https://api.openai.com/v1`) |
+| `OPENAI_MODEL` | No         | Model name for the chat API (default `gpt-4o-mini`) |
 | `DBCHAT_ALLOWED_IDS` | No  | Telegram ids allowed to use the bot, comma-separated. Empty = everyone allowed (dev mode) |
 | `DB_PATH`       | No       | LMDB data directory (default `./data`)                          |
 | `DBCHAT_MOCK_AI` | No      | `1` = force mock answers even with a key set (used by e2e)      |
+
+### OpenAI-compatible providers
+
+The bot talks to any OpenAI-compatible chat API — point `OPENAI_BASE_URL`
+at the provider and set `OPENAI_MODEL` to the model name it serves. The
+`Authorization` header is only sent when `OPENAI_API_KEY` is set, so
+keyless free providers work too. A verified example is Pollinations:
+`OPENAI_BASE_URL=https://text.pollinations.ai/openai` with
+`OPENAI_MODEL=openai` (no key needed), which serves a free model and
+supports tool calls.
 
 ## Testing
 
@@ -190,7 +202,7 @@ E2E tests drive the real bot in-process (`deploy: test`) and assert every Telegr
 
 ## Honest limitations — read before going live
 
-- **No live AI without a key.** Without `OPENAI_API_KEY` the bot answers from mock mode: deterministic, keyword-based answers computed from the real LMDB dataset. It never invents data, and it says nothing it did not read from the database.
+- **No live AI without a key — unless you use a custom provider.** With the default base URL and no `OPENAI_API_KEY`, the bot answers from mock mode: deterministic, keyword-based answers computed from the real LMDB dataset. It never invents data, and it says nothing it did not read from the database. Set `OPENAI_BASE_URL` to a free OpenAI-compatible provider (see "OpenAI-compatible providers") and the bot runs live without a key.
 - **The agent only knows the seeded tables.** It cannot query a database it was not given. To point it at your own data, replace the seed tables (see "Try it out") — there is no live Postgres/MySQL connector in this project.
 - **Mock mode understands a fixed set of question shapes** (list tables, describe a table, count, revenue, list by city, stock). Anything else gets a short echo reply. With a live key, GPT-4o-mini handles free-form questions through the same tools.
 
